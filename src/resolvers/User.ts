@@ -22,7 +22,6 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolver {
-
   @Query(() => User)
   user(
     @Arg("userId") userId: string,
@@ -50,6 +49,9 @@ export class UserResolver {
     @Args() { email, password }: RegisterInput,
     @Ctx() { dataSources: { users } }: MyContext
   ): Promise<Boolean> {
+    const userExists = await users.getUserByEmail(email);
+    if (userExists)
+      throw new Error("there is already an account with that email");
     const hashedPassword = await bcrypt.hash(password, 12);
     users.createUser(email, hashedPassword);
     return true;
