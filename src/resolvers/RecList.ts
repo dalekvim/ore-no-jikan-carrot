@@ -1,5 +1,6 @@
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { MyContext } from "../context";
+import { editDistance } from "../fuzzySearch";
 import { getAnimeById } from "../queries";
 import { RecList } from "../types";
 
@@ -18,6 +19,17 @@ export class RecListResolver {
     @Ctx() { dataSources: { recLists } }: MyContext
   ): Promise<RecList> {
     return recLists.getRecList(recListId);
+  }
+
+  @Query(() => [RecList])
+  async searchRecList(
+    @Arg("title") title: string,
+    @Ctx() { dataSources: { recLists } }: MyContext
+  ): Promise<(RecList | null | undefined)[]> {
+    const allRecLists = await recLists.getRecLists();
+    return allRecLists.filter(
+      (recList) => editDistance(title, recList!.title) <= title.length / 2
+    );
   }
 
   @Authorized()
